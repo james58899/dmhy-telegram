@@ -62,6 +62,7 @@ var getUpdate = function() {
                         console.log('%s => %s: %s', username, channel, msg);
                         bot.sendMessage(channel, msg, {
                             parse_mode: 'HTML',
+                            disable_web_page_preview : true,
                             disable_notification: true
                         });
                     });
