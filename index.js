@@ -60,7 +60,7 @@ var getUpdate = function() {
                 console.log('fetch %s updates', messages.length);
                 config.channel.forEach(function(channel) {
                     console.log('Send Update to %s', channel);
-                    bot.sendMessage(channel, messages.join('\n'), {
+                    bot.sendMessage(channel, messages.join('\n\n'), {
                         parse_mode: 'HTML',
                         disable_web_page_preview: true,
                         disable_notification: true
