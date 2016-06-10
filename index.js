@@ -57,14 +57,13 @@ var getUpdate = function() {
 
             if (messages.length > 0) {
                 messages.reverse();
-                messages.forEach(function(msg) {
-                    config.channel.forEach(function(channel) {
-                        console.log('%s => %s: %s', username, channel, msg);
-                        bot.sendMessage(channel, msg, {
-                            parse_mode: 'HTML',
-                            disable_web_page_preview : true,
-                            disable_notification: true
-                        });
+                console.log('fetch %s updates', messages.length);
+                config.channel.forEach(function(channel) {
+                    console.log('Send Update to %s', channel);
+                    bot.sendMessage(channel, messages.join('\n'), {
+                        parse_mode: 'HTML',
+                        disable_web_page_preview: true,
+                        disable_notification: true
                     });
                 });
             }
@@ -72,4 +71,4 @@ var getUpdate = function() {
     });
 };
 
-setInterval(getUpdate, 600000);
+setInterval(getUpdate, 3600000);
