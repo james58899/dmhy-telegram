@@ -38,7 +38,7 @@ bot.on('left_chat_participant', function(msg) {
 });
 
 var getUpdate = function() {
-    request('https://share.dmhy.org/topics/rss/sort_id/2/rss.xml', function(error, response, body) {
+    request('https://share.dmhy.org/topics/rss/rss.xml?keyword=%E7%B9%81%7Cbig5%7Ccht&sort_id=2', function(error, response, body) {
         if (!error && response.statusCode == 200) {
             var messages = [];
             var tmpDate;
