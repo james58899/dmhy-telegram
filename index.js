@@ -145,4 +145,4 @@ var getUpdate = function() {
     });
 };
 
-schedule.scheduleJob('0 0 */1 * *', getUpdate());
+schedule.scheduleJob('0 * * * *', getUpdate());
