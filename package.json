@@ -11,6 +11,7 @@
   "dependencies": {
     "cheerio": "^0.20.0",
     "moment": "^2.13.0",
+    "node-schedule": "^1.1.1",
     "node-telegram-bot-api": "^0.23.3",
     "request": "^2.72.0"
   }
