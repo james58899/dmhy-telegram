@@ -101,9 +101,7 @@ var search = function(msg) {
                     disable_notification: true
                 });
                 }else{
-                    bot.sendMessage(msg.chat.id, '找不到任何結果！', {
-                        reply_to_message_id: msg.from.id
-                    });
+                    bot.sendMessage(msg.chat.id, '找不到任何結果！');
                 }
             }
         });
