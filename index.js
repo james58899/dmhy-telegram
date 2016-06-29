@@ -55,8 +55,6 @@ bot.onText(/^\/(\w+)@?\w*/i, function(msg, regex) {
                 bot.sendMessage(msg.chat.id, '尚未訂閱');
             }
             break;
-
-
     }
 });
 
@@ -91,6 +89,7 @@ var search = function(msg) {
                     xmlMode: true
                 });
 
+                if($("item").index() > 0){
                 $("item").each(function(i, elem) {
                     if (i < 5) {
                         result.push(util.format('<a href="%s">%s</a>', $(this).children('link').text(), $(this).children('title').text()));
@@ -101,6 +100,11 @@ var search = function(msg) {
                     disable_web_page_preview: true,
                     disable_notification: true
                 });
+                }else{
+                    bot.sendMessage(msg.chat.id, '找不到任何結果！', {
+                        reply_to_message_id: msg.from.id
+                    });
+                }
             }
         });
     }
@@ -127,9 +131,9 @@ var getUpdate = function() {
             });
             if (tmpDate) pubDate = tmpDate;
 
+            console.log('fetch %s updates', messages.length);
             if (messages.length > 0) {
                 messages.reverse();
-                console.log('fetch %s updates', messages.length);
                 config.channel.forEach(function(channel) {
                     console.log('Send Update to %s', channel);
                     bot.sendMessage(channel, messages.join('\n\n'), {
