@@ -89,19 +89,45 @@ var search = function(msg) {
                     xmlMode: true
                 });
 
-                if($("item").index() > 0){
-                $("item").each(function(i, elem) {
-                    if (i < 5) {
-                        result.push(util.format('<a href="%s">%s</a>', $(this).children('link').text(), $(this).children('title').text()));
-                    }
-                });
-                bot.sendMessage(msg.chat.id, result.join('\n\n'), {
-                    parse_mode: 'HTML',
-                    disable_web_page_preview: true,
-                    disable_notification: true
-                });
-                }else{
-                    bot.sendMessage(msg.chat.id, '找不到任何結果！');
+                if ($("item").index() > 0) {
+                    result.push('目前搜尋範圍：季度全集');
+                    $("item").each(function(i, elem) {
+                        if (i < 5) {
+                            result.push(util.format('<a href="%s">%s</a>', $(this).children('link').text(), $(this).children('title').text()));
+                        }
+                    });
+                    bot.sendMessage(msg.chat.id, result.join('\n\n'), {
+                        parse_mode: 'HTML',
+                        disable_web_page_preview: true,
+                        disable_notification: true
+                    });
+                }
+                else {
+                    request('http://share.dmhy.org/topics/rss/rss.xml?keyword=' + keyword, function(err, res, body) {
+                        if (!err && res.statusCode == 200) {
+                            var result = [];
+                            var $ = cheerio.load(body, {
+                                xmlMode: true
+                            });
+
+                            if ($("item").index() > 0) {
+                                result.push('目前搜尋範圍：全部');
+                                $("item").each(function(i, elem) {
+                                    if (i < 5) {
+                                        result.push(util.format('<a href="%s">%s</a>', $(this).children('link').text(), $(this).children('title').text()));
+                                    }
+                                });
+                                bot.sendMessage(msg.chat.id, result.join('\n\n'), {
+                                    parse_mode: 'HTML',
+                                    disable_web_page_preview: true,
+                                    disable_notification: true
+                                });
+                            }
+                            else {
+                                bot.sendMessage(msg.chat.id, '找不到任何結果！');
+                            }
+                        }
+                    });
                 }
             }
         });
