@@ -11,7 +11,10 @@ var username;
 var pubDate = moment();
 var config = JSON.parse(fs.readFileSync('data.json', 'utf8'));
 var bot = new TelegramBot(config.key, {
-    polling: true
+    polling: {
+        timeout: 60,
+        interval: 0
+    }
 });
 
 bot.getMe().then(function(me) {
