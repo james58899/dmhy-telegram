@@ -90,8 +90,7 @@ var search = function(msg) {
     keyword = encodeURI(keyword[1].replace(' ', '+'));
     request('https://share.dmhy.org/topics/rss/sort_id/31/rss.xml?keyword=' + keyword, function(err, res, body) {
         if (err || res.statusCode != 200) {
-            bot.sendMessage(msg.chat.id, '抓取結果時發生錯誤！');
-            console.error(err);
+            bot.sendMessage(msg.chat.id, '抓取結果時發生錯誤！\n錯誤代碼：' + res.statusCode);
             return;
         }
         var processItem = function() {
@@ -120,8 +119,7 @@ var search = function(msg) {
         }
         else request('http://share.dmhy.org/topics/rss/rss.xml?keyword=' + keyword, function(err, res, body) {
             if (err || res.statusCode != 200) {
-                bot.sendMessage(msg.chat.id, '抓取結果時發生錯誤！');
-                console.error(err);
+                bot.sendMessage(msg.chat.id, '抓取結果時發生錯誤！\n錯誤代碼：' + res.statusCode);
                 return;
             }
 
