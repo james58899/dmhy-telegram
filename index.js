@@ -16,7 +16,7 @@ var bot = new TelegramBot(config.key, {
     }
 });
 
-bot.getMe().then(function(me) {
+bot.getMe().then(me => {
     username = me.username;
 });
 
@@ -136,8 +136,9 @@ var search = function(msg) {
 };
 
 var getUpdate = function() {
-    request('https://share.dmhy.org/topics/rss/rss.xml?keyword=%E7%B9%81%7Cbig5%7Ccht&sort_id=2', function(err, res, body) {
+    request('https://share.dmhy.org/topics/rss/sort_id/2/rss.xml', function(err, res, body) {
         if (err || res.statusCode != 200) {
+            console.log('update fetch failed! code:%s', res.statusCode);
             return;
         }
         var messages = [];
@@ -148,7 +149,8 @@ var getUpdate = function() {
 
         $("item").each(function(i, elem) {
             var date = moment($(this).children('pubDate').text(), 'ddd, DD MMM YYYY HH:mm:ss ZZ');
-            if (pubDate.isBefore(date)) {
+            var filter = $(this).children('title').text().match(/(繁|big5|cht)/ig);
+            if (pubDate.isBefore(date) && filter) {
                 messages.push(util.format('<a href="%s">%s</a>', $(this).children('link').text(), $(this).children('title').text()));
                 if (!tmpDate) tmpDate = date;
             }
@@ -159,11 +161,14 @@ var getUpdate = function() {
         if (messages.length > 0) {
             messages.reverse();
             config.channel.forEach(function(channel) {
-                console.log('Send Update to %s', channel);
                 bot.sendMessage(channel, messages.join('\n\n'), {
                     parse_mode: 'HTML',
                     disable_web_page_preview: true,
                     disable_notification: true
+                }).then(i => {
+                    console.log('Send Update to %s', channel);
+                }).catch(e => {
+                    console.log('Send Update to %s failed! Error: %s', channel, e.message);
                 });
             });
         }
