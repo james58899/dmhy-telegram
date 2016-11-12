@@ -6,61 +6,55 @@ const cheerio = require('cheerio'),
     TelegramBot = require('node-telegram-bot-api'),
     request = require("request");
 
-var username, updateTime;
-var pubDate = moment();
-var config = JSON.parse(fs.readFileSync('data.json', 'utf8'));
-var bot = new TelegramBot(config.key, {
-    polling: {
-        timeout: 60,
-        interval: 0
-    }
-});
+let username,
+    messageIDs = [],
+    results = [],
+    pubDate = moment();
+
+const config = JSON.parse(fs.readFileSync('data.json', 'utf8')),
+    bot = new TelegramBot(config.key, {
+        polling: {
+            timeout: 60,
+            interval: 0
+        }
+    });
 
 bot.getMe().then(me => {
     username = me.username;
 });
 
-bot.onText(/^\/(\w+)@?\w*/i, function(msg, regex) {
+bot.onText(/^\/(\w+)@?\w*/i, (msg, regex) => {
     if (msg.chat.type === 'private') {
         console.log('%s(%s) => %s: %s', msg.from.username, msg.from.id, username, msg.text);
     }
     else console.log('%s(%s) => %s(%s): %s', msg.from.username, msg.from.id, msg.chat.title, msg.chat.id, msg.text);
 
-
     switch (regex[1]) {
-        case 'update':
-            if (!updateTime || updateTime.add(10, 'm').isBefore(moment())) {
-                getUpdate();
-                updateTime = moment();
-            }
-            break;
-        case 'search':
-            search(msg);
-            break;
-        case 'subscribe':
-            if (config.channel.indexOf(msg.chat.id) < 0) {
-                config.channel.push(msg.chat.id);
-                fs.writeFile('data.json', JSON.stringify(config));
-                console.log(msg.chat.id + ' Add to subscription list.');
-                bot.sendMessage(msg.chat.id, '已加入訂閱清單！');
-            }
-            else bot.sendMessage(msg.chat.id, '已經在訂閱清單中了！');
-
-            break;
-        case 'unsubscribe':
-            if (config.channel.indexOf(msg.chat.id) > -1) {
-                config.channel.splice(config.channel.indexOf(msg.chat.id), 1);
-                fs.writeFile('data.json', JSON.stringify(config));
-                console.log(msg.chat.id + ' remove from subscription list.');
-                bot.sendMessage(msg.chat.id, '已從訂閱清單中刪除');
-            }
-            else bot.sendMessage(msg.chat.id, '尚未訂閱');
-
-            break;
+    case 'search':
+        search(msg);
+        break;
+    case 'subscribe':
+        if (config.channel.indexOf(msg.chat.id) < 0) {
+            config.channel.push(msg.chat.id);
+            fs.writeFile('data.json', JSON.stringify(config));
+            console.log(msg.chat.id + ' Add to subscription list.');
+            bot.sendMessage(msg.chat.id, '已加入訂閱清單！');
+        }
+        else bot.sendMessage(msg.chat.id, '已經在訂閱清單中了！');
+        break;
+    case 'unsubscribe':
+        if (config.channel.indexOf(msg.chat.id) > -1) {
+            config.channel.splice(config.channel.indexOf(msg.chat.id), 1);
+            fs.writeFile('data.json', JSON.stringify(config));
+            console.log(msg.chat.id + ' remove from subscription list.');
+            bot.sendMessage(msg.chat.id, '已從訂閱清單中刪除');
+        }
+        else bot.sendMessage(msg.chat.id, '尚未訂閱');
+        break;
     }
 });
 
-bot.on('new_chat_participant', function(msg) {
+bot.on('new_chat_participant', msg => {
     if (msg.new_chat_member.username === username) {
         console.log('join %s(%s)', msg.chat.title, msg.chat.id);
         if (config.channel.indexOf(msg.chat.id) < 0) {
@@ -70,7 +64,7 @@ bot.on('new_chat_participant', function(msg) {
     }
 });
 
-bot.on('left_chat_participant', function(msg) {
+bot.on('left_chat_participant', msg => {
     if (msg.left_chat_member.username === username) {
         console.log('left %s(%s)', msg.chat.title, msg.chat.id);
         if (config.channel.indexOf(msg.chat.id) > -1) {
@@ -80,21 +74,21 @@ bot.on('left_chat_participant', function(msg) {
     }
 });
 
-var search = function(msg) {
-    var keyword = msg.text.match(/\s(.+)/);
+const search = function (msg) {
+    let keyword = msg.text.match(/\s(.+)/);
     if (!keyword) {
         bot.sendMessage(msg.chat.id, '請輸入要搜尋的關鍵字！\n範例：/search 果 青\n群組內僅顯示五個結果\n更多資訊請看 https://share.dmhy.org/cms/page/name/faq.html#faq3');
         return;
     }
 
     keyword = encodeURI(keyword[1].replace(' ', '+'));
-    request('https://share.dmhy.org/topics/rss/sort_id/31/rss.xml?keyword=' + keyword, function(err, res, body) {
+    request('https://share.dmhy.org/topics/rss/sort_id/31/rss.xml?keyword=' + keyword, (err, res, body) => {
         if (err || res.statusCode != 200) {
             bot.sendMessage(msg.chat.id, '抓取結果時發生錯誤！');
             return;
         }
-        var processItem = function() {
-            $("item").each(function(i, elem) {
+        const processItem = function () {
+            $("item").each(function (i, elem) {
                 if (msg.chat.type == 'private') {
                     result.push(util.format('<a href="%s">%s</a>', $(this).children('link').text(), $(this).children('title').text()));
                 }
@@ -109,15 +103,15 @@ var search = function(msg) {
             });
         };
 
-        var result = [];
-        var $ = cheerio.load(body, {
+        let result = [];
+        let $ = cheerio.load(body, {
             xmlMode: true
         });
         if ($("item").index() > 0) {
             result.push('目前搜尋範圍：季度全集');
             processItem();
         }
-        else request('http://share.dmhy.org/topics/rss/rss.xml?keyword=' + keyword, function(err, res, body) {
+        else request('http://share.dmhy.org/topics/rss/rss.xml?keyword=' + keyword, (err, res, body) => {
             if (err || res.statusCode != 200) {
                 bot.sendMessage(msg.chat.id, '抓取結果時發生錯誤！');
                 return;
@@ -135,44 +129,62 @@ var search = function(msg) {
     });
 };
 
-var getUpdate = function() {
-    request('https://share.dmhy.org/topics/rss/sort_id/2/rss.xml', function(err, res, body) {
+const getUpdate = function () {
+    request('https://share.dmhy.org/topics/rss/sort_id/2/rss.xml', (err, res, body) => {
         if (err || res.statusCode != 200) {
             console.log('update fetch failed!');
             return;
         }
-        var messages = [];
-        var tmpDate;
-        var $ = cheerio.load(body, {
+        let tmpDate;
+        let $ = cheerio.load(body, {
             xmlMode: true
         });
 
-        $("item").each(function(i, elem) {
-            var date = moment($(this).children('pubDate').text(), 'ddd, DD MMM YYYY HH:mm:ss ZZ');
-            var filter = $(this).children('title').text().match(/(繁|big5|cht)/ig);
+        $("item").each(function (i, elem) {
+            let date = moment($(this).children('pubDate').text(), 'ddd, DD MMM YYYY HH:mm:ss ZZ');
+            let filter = $(this).children('title').text().match(/(繁|big5|cht)/ig);
             if (pubDate.isBefore(date) && filter) {
-                messages.push(util.format('<a href="%s">%s</a>', $(this).children('link').text(), $(this).children('title').text()));
+                results.push(util.format('<a href="%s">%s</a>', $(this).children('link').text(), $(this).children('title').text()));
                 if (!tmpDate) tmpDate = date;
             }
         });
         if (tmpDate) pubDate = tmpDate;
-
-        console.log('fetch %s updates', messages.length);
-        if (messages.length > 0) {
-            messages.reverse();
-            config.channel.forEach(function(channel) {
-                bot.sendMessage(channel, messages.join('\n\n'), {
-                    parse_mode: 'HTML',
-                    disable_web_page_preview: true,
-                    disable_notification: true
-                }).then(i => {
-                    console.log('Send Update to %s', channel);
-                }).catch(e => {
-                    console.log('Send Update to %s failed! Error: %s', channel, e.message);
+        if (results.length > 0) {
+            let message = results.slice().reverse();
+            message.push(util.format('最後更新：%s', moment(pubDate).locale("zh-tw").fromNow()));
+            if (messageIDs.length === 0) {
+                config.channel.forEach(channel => {
+                    bot.sendMessage(channel, message.join('\n\n'), {
+                        parse_mode: 'HTML',
+                        disable_web_page_preview: true,
+                        disable_notification: true
+                    }).then(msg => {
+                        messageIDs.push({
+                            chat_id: msg.chat.id,
+                            message_id: msg.message_id
+                        });
+                    }).catch(e => {
+                        console.log('Send Update to %s failed! Error: %s', channel, e.message);
+                    });
                 });
-            });
+            }
+            else {
+                messageIDs.forEach(id => {
+                    bot.editMessageText(message.join('\n\n'), {
+                        chat_id: id.chat_id,
+                        message_id: id.message_id,
+                        parse_mode: 'HTML',
+                        disable_web_page_preview: true,
+                        disable_notification: true
+                    }).catch(() => {});
+                });
+            }
         }
     });
 };
 
-schedule.scheduleJob('0 * * * *', getUpdate);
+schedule.scheduleJob('0 * * * * *', getUpdate);
+schedule.scheduleJob('0 * * * *', () => {
+    messageIDs = [];
+    results = [];
+});
