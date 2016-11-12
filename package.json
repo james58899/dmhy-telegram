@@ -1,6 +1,6 @@
 {
   "name": "dmhy-auto-fetch",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -9,10 +9,10 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "cheerio": "^0.20.0",
-    "moment": "^2.13.0",
-    "node-schedule": "^1.1.1",
-    "node-telegram-bot-api": "^0.23.3",
-    "request": "^2.72.0"
+    "cheerio": "^0.22.0",
+    "moment": "^2.16.0",
+    "node-schedule": "^1.2.0",
+    "node-telegram-bot-api": "^0.24.0",
+    "request": "^2.78.0"
   }
 }
