@@ -90,10 +90,14 @@ const search = function (msg) {
         const processItem = function () {
             $("item").each(function (i, elem) {
                 if (msg.chat.type == 'private') {
-                    result.push(util.format('<a href="%s">%s</a>', $(this).children('link').text(), $(this).children('title').text()));
+                    result.push(util.format('<a href="%s">%s</a>',
+                        $(this).children('link').text(),
+                        $(this).children('title').text().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')));
                 }
                 else if (i < 5) {
-                    result.push(util.format('<a href="%s">%s</a>', $(this).children('link').text(), $(this).children('title').text()));
+                    result.push(util.format('<a href="%s">%s</a>',
+                        $(this).children('link').text(),
+                        $(this).children('title').text().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')));
                 }
             });
             bot.sendMessage(msg.chat.id, result.join('\n\n'), {
@@ -130,55 +134,54 @@ const search = function (msg) {
 };
 
 const getUpdate = function () {
-    request('https://share.dmhy.org/topics/rss/sort_id/2/rss.xml', (err, res, body) => {
+    request('https://share.dmhy.org/topics/rss/rss.xml', (err, res, body) => {
         if (err || res.statusCode != 200) {
             console.log('update fetch failed!');
             return;
         }
-        let tmpDate;
-        let $ = cheerio.load(body, {
-            xmlMode: true
-        });
+        let tmpDate,
+            $ = cheerio.load(body, {
+                xmlMode: true
+            });
 
         $("item").each(function (i, elem) {
             let date = moment($(this).children('pubDate').text(), 'ddd, DD MMM YYYY HH:mm:ss ZZ');
-            let filter = $(this).children('title').text().match(/(繁|big5|cht)/ig);
-            if (pubDate.isBefore(date) && filter) {
-                results.push(util.format('<a href="%s">%s</a>', $(this).children('link').text(), $(this).children('title').text()));
+            if (pubDate.isBefore(date)) {
+                results.push(util.format('<a href="%s">%s</a>',
+                    $(this).children('link').text(),
+                    $(this).children('title').text().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')));
                 if (!tmpDate) tmpDate = date;
             }
         });
         if (tmpDate) pubDate = tmpDate;
-        if (results.length > 0) {
-            let message = results.slice().reverse();
-            message.push(util.format('最後更新：%s', moment(pubDate).locale("zh-tw").fromNow()));
-            if (messageIDs.length === 0) {
-                config.channel.forEach(channel => {
-                    bot.sendMessage(channel, message.join('\n\n'), {
-                        parse_mode: 'HTML',
-                        disable_web_page_preview: true,
-                        disable_notification: true
-                    }).then(msg => {
-                        messageIDs.push({
-                            chat_id: msg.chat.id,
-                            message_id: msg.message_id
-                        });
-                    }).catch(e => {
-                        console.log('Send Update to %s failed! Error: %s', channel, e.message);
+        let message = results.slice().reverse();
+        if (results.length === 0) message.push("現在沒有更新內容喔 (&gt;﹏&lt;)");
+        if (messageIDs.length === 0) {
+            config.channel.forEach(channel => {
+                bot.sendMessage(channel, message.join('\n\n'), {
+                    parse_mode: 'HTML',
+                    disable_web_page_preview: true,
+                    disable_notification: true
+                }).then(msg => {
+                    messageIDs.push({
+                        chat_id: msg.chat.id,
+                        message_id: msg.message_id
                     });
+                }).catch(e => {
+                    console.log('Send Update to %s failed! Error: %s', channel, e.message);
                 });
-            }
-            else {
-                messageIDs.forEach(id => {
-                    bot.editMessageText(message.join('\n\n'), {
-                        chat_id: id.chat_id,
-                        message_id: id.message_id,
-                        parse_mode: 'HTML',
-                        disable_web_page_preview: true,
-                        disable_notification: true
-                    }).catch(() => {});
-                });
-            }
+            });
+        }
+        else {
+            messageIDs.forEach(id => {
+                bot.editMessageText(message.join('\n\n'), {
+                    chat_id: id.chat_id,
+                    message_id: id.message_id,
+                    parse_mode: 'HTML',
+                    disable_web_page_preview: true,
+                    disable_notification: true
+                }).catch(() => {});
+            });
         }
     });
 };
