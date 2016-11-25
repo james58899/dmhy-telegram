@@ -139,7 +139,8 @@ const getUpdate = function () {
             console.log('update fetch failed!');
             return;
         }
-        let tmpDate,
+        let tmpTime,
+            tmpData = [],
             $ = cheerio.load(body, {
                 xmlMode: true
             });
@@ -147,15 +148,18 @@ const getUpdate = function () {
         $("item").each(function (i, elem) {
             let date = moment($(this).children('pubDate').text(), 'ddd, DD MMM YYYY HH:mm:ss ZZ');
             if (pubDate.isBefore(date)) {
-                results.push(util.format('<a href="%s">%s</a>',
+                tmpData.push(util.format('%s <code>%s</code> <a href="%s">%s</a>',
+                    date.locale('zh-tw').utcOffset(8).format('H:mm'),
+                    $(this).children('category').text(),
                     $(this).children('link').text(),
                     $(this).children('title').text().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')));
-                if (!tmpDate) tmpDate = date;
+                    if (!tmpTime) tmpTime = date;
             }
         });
-        if (tmpDate) pubDate = tmpDate;
+        if (tmpData.length !== 0) results = tmpData.concat(results);
+        if (tmpTime) pubDate = tmpTime;
         let message = results.slice().reverse();
-        if (results.length === 0) message.push("現在沒有更新內容喔 (&gt;﹏&lt;)");
+        if (results.length === 0) message.push('現在沒有更新內容喔 (&gt;﹏&lt;)');
         if (messageIDs.length === 0) {
             config.channel.forEach(channel => {
                 bot.sendMessage(channel, message.join('\n\n'), {
