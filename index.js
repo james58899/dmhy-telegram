@@ -90,12 +90,14 @@ const search = function (msg) {
         const processItem = function () {
             $("item").each(function (i, elem) {
                 if (msg.chat.type == 'private') {
-                    result.push(util.format('<a href="%s">%s</a>',
+                    result.push(util.format('<code>%s</code> <a href="%s">%s</a>',
+                        $(this).children('category').text(),
                         $(this).children('link').text(),
                         $(this).children('title').text().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')));
                 }
                 else if (i < 5) {
-                    result.push(util.format('<a href="%s">%s</a>',
+                    result.push(util.format('<code>%s</code> <a href="%s">%s</a>',
+                        $(this).children('category').text(),
                         $(this).children('link').text(),
                         $(this).children('title').text().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')));
                 }
@@ -153,13 +155,13 @@ const getUpdate = function () {
                     $(this).children('category').text(),
                     $(this).children('link').text(),
                     $(this).children('title').text().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')));
-                    if (!tmpTime) tmpTime = date;
+                if (!tmpTime) tmpTime = date;
             }
         });
         if (tmpData.length !== 0) results = tmpData.concat(results);
         if (tmpTime) pubDate = tmpTime;
+        if (results.length === 0) return;
         let message = results.slice().reverse();
-        if (results.length === 0) message.push('現在沒有更新內容喔 (&gt;﹏&lt;)');
         if (messageIDs.length === 0) {
             config.channel.forEach(channel => {
                 bot.sendMessage(channel, message.join('\n\n'), {
