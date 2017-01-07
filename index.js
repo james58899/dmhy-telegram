@@ -30,28 +30,40 @@ bot.onText(/^\/(\w+)@?\w*/i, (msg, regex) => {
     else console.log('%s(%s) => %s(%s): %s', msg.from.username, msg.from.id, msg.chat.title, msg.chat.id, msg.text);
 
     switch (regex[1]) {
-    case 'search':
-        search(msg);
-        break;
-    case 'subscribe':
-        if (config.channel.indexOf(msg.chat.id) < 0) {
-            config.channel.push(msg.chat.id);
-            fs.writeFile('data.json', JSON.stringify(config));
-            console.log(msg.chat.id + ' Add to subscription list.');
-            bot.sendMessage(msg.chat.id, '已加入訂閱清單！');
-        }
-        else bot.sendMessage(msg.chat.id, '已經在訂閱清單中了！');
-        break;
-    case 'unsubscribe':
-        if (config.channel.indexOf(msg.chat.id) > -1) {
-            config.channel.splice(config.channel.indexOf(msg.chat.id), 1);
-            fs.writeFile('data.json', JSON.stringify(config));
-            console.log(msg.chat.id + ' remove from subscription list.');
-            bot.sendMessage(msg.chat.id, '已從訂閱清單中刪除');
-        }
-        else bot.sendMessage(msg.chat.id, '尚未訂閱');
-        break;
+        case 'search':
+            search(msg);
+            break;
+        case 'subscribe':
+            if (config.channel.indexOf(msg.chat.id) < 0) {
+                config.channel.push(msg.chat.id);
+                fs.writeFile('data.json', JSON.stringify(config));
+                console.log(msg.chat.id + ' Add to subscription list.');
+                bot.sendMessage(msg.chat.id, '已加入訂閱清單！');
+            }
+            else bot.sendMessage(msg.chat.id, '已經在訂閱清單中了！');
+            break;
+        case 'unsubscribe':
+            if (config.channel.indexOf(msg.chat.id) > -1) {
+                config.channel.splice(config.channel.indexOf(msg.chat.id), 1);
+                fs.writeFile('data.json', JSON.stringify(config));
+                console.log(msg.chat.id + ' remove from subscription list.');
+                bot.sendMessage(msg.chat.id, '已從訂閱清單中刪除');
+            }
+            else bot.sendMessage(msg.chat.id, '尚未訂閱');
+            break;
     }
+});
+
+bot.onText(/https?:\/\/share\.dmhy\.org\/topics\/view\/.*\.html/ig, (msg, regex) => {
+    request(regex[0], (error, response, body) => {
+        if (error || response.statusCode != 200) return;
+        let link = cheerio.load(body)('#magnet2').attr('href');
+        if (link != null) {
+            bot.sendMessage(msg.chat.id, link, {
+                reply_to_message_id: msg.message_id
+            });
+        }
+    });
 });
 
 bot.on('new_chat_participant', msg => {
@@ -74,7 +86,7 @@ bot.on('left_chat_participant', msg => {
     }
 });
 
-const search = function (msg) {
+const search = function(msg) {
     let keyword = msg.text.match(/\s(.+)/);
     if (!keyword) {
         bot.sendMessage(msg.chat.id, '請輸入要搜尋的關鍵字！\n範例：/search 果 青\n群組內僅顯示五個結果\n更多資訊請看 https://share.dmhy.org/cms/page/name/faq.html#faq3');
@@ -87,8 +99,8 @@ const search = function (msg) {
             bot.sendMessage(msg.chat.id, '抓取結果時發生錯誤！');
             return;
         }
-        const processItem = function () {
-            $("item").each(function (i, elem) {
+        const processItem = function() {
+            $("item").each(function(i, elem) {
                 if (msg.chat.type == 'private') {
                     result.push(util.format('<code>%s</code> <a href="%s">%s</a>',
                         $(this).children('category').text(),
@@ -135,7 +147,7 @@ const search = function (msg) {
     });
 };
 
-const getUpdate = function () {
+const getUpdate = function() {
     request('https://share.dmhy.org/topics/rss/rss.xml', (err, res, body) => {
         if (err || res.statusCode != 200) {
             console.log('update fetch failed!');
@@ -147,7 +159,7 @@ const getUpdate = function () {
                 xmlMode: true
             });
 
-        $("item").each(function (i, elem) {
+        $("item").each(function(i, elem) {
             let date = moment($(this).children('pubDate').text(), 'ddd, DD MMM YYYY HH:mm:ss ZZ');
             if (pubDate.isBefore(date)) {
                 tmpData.push(util.format('%s <code>%s</code> <a href="%s">%s</a>',
