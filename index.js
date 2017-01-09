@@ -21,46 +21,49 @@ const config = JSON.parse(fs.readFileSync('data.json', 'utf8')),
 
 bot.getMe().then(me => {
     username = me.username;
-});
+}).then(() => {
+    bot.onText(new RegExp('^/(\\w+)@' + username, 'i'), (msg, regex) => {
+        if (msg.chat.type === 'private') {
+            console.log('%s(%s) => %s: %s', msg.from.username, msg.from.id, username, msg.text);
+        }
+        else console.log('%s(%s) => %s(%s): %s', msg.from.username, msg.from.id, msg.chat.title, msg.chat.id, msg.text);
 
-bot.onText(/^\/(\w+)@?\w*/i, (msg, regex) => {
-    if (msg.chat.type === 'private') {
-        console.log('%s(%s) => %s: %s', msg.from.username, msg.from.id, username, msg.text);
-    }
-    else console.log('%s(%s) => %s(%s): %s', msg.from.username, msg.from.id, msg.chat.title, msg.chat.id, msg.text);
-
-    switch (regex[1]) {
-        case 'search':
-            search(msg);
-            break;
-        case 'subscribe':
-            if (config.channel.indexOf(msg.chat.id) < 0) {
-                config.channel.push(msg.chat.id);
-                fs.writeFile('data.json', JSON.stringify(config));
-                console.log(msg.chat.id + ' Add to subscription list.');
-                bot.sendMessage(msg.chat.id, '已加入訂閱清單！');
-            }
-            else bot.sendMessage(msg.chat.id, '已經在訂閱清單中了！');
-            break;
-        case 'unsubscribe':
-            if (config.channel.indexOf(msg.chat.id) > -1) {
-                config.channel.splice(config.channel.indexOf(msg.chat.id), 1);
-                fs.writeFile('data.json', JSON.stringify(config));
-                console.log(msg.chat.id + ' remove from subscription list.');
-                bot.sendMessage(msg.chat.id, '已從訂閱清單中刪除');
-            }
-            else bot.sendMessage(msg.chat.id, '尚未訂閱');
-            break;
-    }
+        switch (regex[1]) {
+            case 'search':
+                search(msg);
+                break;
+            case 'subscribe':
+                if (config.channel.indexOf(msg.chat.id) < 0) {
+                    config.channel.push(msg.chat.id);
+                    fs.writeFile('data.json', JSON.stringify(config));
+                    console.log(msg.chat.id + ' Add to subscription list.');
+                    bot.sendMessage(msg.chat.id, '已加入訂閱清單！');
+                }
+                else bot.sendMessage(msg.chat.id, '已經在訂閱清單中了！');
+                break;
+            case 'unsubscribe':
+                if (config.channel.indexOf(msg.chat.id) > -1) {
+                    config.channel.splice(config.channel.indexOf(msg.chat.id), 1);
+                    fs.writeFile('data.json', JSON.stringify(config));
+                    console.log(msg.chat.id + ' remove from subscription list.');
+                    bot.sendMessage(msg.chat.id, '已從訂閱清單中刪除');
+                }
+                else bot.sendMessage(msg.chat.id, '尚未訂閱');
+                break;
+        }
+    });
 });
 
 bot.onText(/https?:\/\/share\.dmhy\.org\/topics\/view\/.*\.html/ig, (msg, regex) => {
     request(regex[0], (error, response, body) => {
         if (error || response.statusCode != 200) return;
-        let link = cheerio.load(body)('#magnet2').attr('href');
-        if (link != null) {
-            bot.sendMessage(msg.chat.id, link, {
-                reply_to_message_id: msg.message_id
+        let $ = cheerio.load(body);
+        let link = $('#magnet2').text();
+        let torrent = $('#tabs-1 a').attr('href');
+        if (link && torrent) {
+            bot.sendMessage(msg.chat.id, util.format(`<a href="https:${torrent}">${link}</a>`), {
+                reply_to_message_id: msg.message_id,
+                parse_mode: 'HTML'
             });
         }
     });
