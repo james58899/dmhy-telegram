@@ -22,7 +22,8 @@ const config = JSON.parse(fs.readFileSync('data.json', 'utf8')),
 bot.getMe().then(me => {
     username = me.username;
 }).then(() => {
-    bot.onText(new RegExp('^/(\\w+)(?:@' + username + ')? ', 'i'), (msg, regex) => {
+    bot.onText(/^\/(\w+)@?(\w*)/i, (msg, regex) => {
+        if(regex[2] && regex[2] != username) return;
         if (msg.chat.type === 'private') {
             console.log('%s(%s) => %s: %s', msg.from.username, msg.from.id, username, msg.text);
         }
