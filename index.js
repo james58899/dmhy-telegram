@@ -23,7 +23,7 @@ bot.getMe().then(me => {
     username = me.username;
 }).then(() => {
     bot.onText(/^\/(\w+)@?(\w*)/i, (msg, regex) => {
-        if(regex[2] && regex[2] != username) return;
+        if (regex[2] && regex[2] != username) return;
         if (msg.chat.type === 'private') {
             console.log('%s(%s) => %s: %s', msg.from.username, msg.from.id, username, msg.text);
         }
@@ -191,6 +191,10 @@ const getUpdate = function() {
                     });
                 }).catch(e => {
                     console.log('Send Update to %s failed! Error: %s', channel, e.message);
+                    if (config.channel.indexOf(channel) > -1) {
+                        config.channel.splice(config.channel.indexOf(channel), 1);
+                        fs.writeFile('data.json', JSON.stringify(config));
+                    }
                 });
             });
         }
