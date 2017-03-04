@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
@@ -14,5 +15,9 @@
     "node-schedule": "^1.2.0",
     "node-telegram-bot-api": "^0.27.0",
     "request": "^2.79.0"
+  },
+  "devDependencies": {
+    "eslint": "^3.17.0",
+    "eslint-config-google": "^0.7.1"
   }
 }
