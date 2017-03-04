@@ -1,3 +1,4 @@
+"use strict";
 const cheerio = require('cheerio'),
     fs = require('fs'),
     util = require('util'),
