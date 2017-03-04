@@ -4,18 +4,20 @@ const cheerio = require('cheerio'),
     moment = require('moment'),
     schedule = require('node-schedule'),
     TelegramBot = require('node-telegram-bot-api'),
-    request = require("request");
+    request = require('request'),
+    config = require('data.json');
 
 let username,
     messageIDs = [],
     results = [],
     pubDate = moment();
 
-const config = JSON.parse(fs.readFileSync('data.json', 'utf8')),
-    bot = new TelegramBot(config.key, {
+const bot = new TelegramBot(config.key, {
         polling: {
-            timeout: 60,
-            interval: 0
+            interval: 0,
+            params: {
+                timeout: 60
+            }
         }
     });
 
@@ -104,7 +106,7 @@ const search = function(msg) {
             return;
         }
         const processItem = function() {
-            $("item").each(function(i, elem) {
+            $('item').each(function(i, elem) {
                 if (msg.chat.type == 'private') {
                     result.push(util.format('<code>%s</code> <a href="%s">%s</a>',
                         $(this).children('category').text(),
@@ -129,7 +131,7 @@ const search = function(msg) {
         let $ = cheerio.load(body, {
             xmlMode: true
         });
-        if ($("item").index() > 0) {
+        if ($('item').index() > 0) {
             result.push('目前搜尋範圍：季度全集');
             processItem();
         }
@@ -142,7 +144,7 @@ const search = function(msg) {
             $ = cheerio.load(body, {
                 xmlMode: true
             });
-            if ($("item").index() > 0) {
+            if ($('item').index() > 0) {
                 result.push('目前搜尋範圍：全部');
                 processItem();
             }
@@ -163,7 +165,7 @@ const getUpdate = function() {
                 xmlMode: true
             });
 
-        $("item").each(function(i, elem) {
+        $('item').each(function(i, elem) {
             let date = moment($(this).children('pubDate').text(), 'ddd, DD MMM YYYY HH:mm:ss ZZ');
             if (pubDate.isBefore(date)) {
                 tmpData.push(util.format('%s <code>%s</code> <a href="%s">%s</a>',
