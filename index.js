@@ -6,8 +6,9 @@ const moment = require('moment');
 const schedule = require('node-schedule');
 const TelegramBot = require('node-telegram-bot-api');
 const request = require('request');
-const config = require('data.json');
+const config = require('./data.json');
 
+const failed = [];
 let username;
 let messageIDs = [];
 let results = [];
@@ -42,21 +43,33 @@ bot.getMe().then((me) => {
         case 'subscribe':
             if (config.channel.indexOf(msg.chat.id) < 0) {
                 config.channel.push(msg.chat.id);
-                fs.writeFile('data.json', JSON.stringify(config));
+                fs.writeFile('data.json', JSON.stringify(config), () => {});
                 console.log(msg.chat.id + ' Add to subscription list.');
-                bot.sendMessage(msg.chat.id, '已加入訂閱清單！');
+                if (msg.chat.type === 'private') {
+                    bot.sendMessage(msg.chat.id, '訂閱成功！\n當有更新時會向您發送訊息');
+                } else {
+                    bot.sendMessage(msg.chat.id, '訂閱成功！\n當有更新時會向這個聊天室發送訊息');
+                }
             } else {
-                bot.sendMessage(msg.chat.id, '已經在訂閱清單中了！');
+                if (msg.chat.type === 'private') {
+                    bot.sendMessage(msg.chat.id, '您已經在訂閱清單中了！');
+                } else {
+                    bot.sendMessage(msg.chat.id, '這個聊天室已經在訂閱清單中了！');
+                }
             }
             break;
         case 'unsubscribe':
             if (config.channel.indexOf(msg.chat.id) > -1) {
                 config.channel.splice(config.channel.indexOf(msg.chat.id), 1);
-                fs.writeFile('data.json', JSON.stringify(config));
+                fs.writeFile('data.json', JSON.stringify(config), () => {});
                 console.log(msg.chat.id + ' remove from subscription list.');
-                bot.sendMessage(msg.chat.id, '已從訂閱清單中刪除');
+                if (msg.chat.type === 'private') {
+                    bot.sendMessage(msg.chat.id, '已將您從訂閱清單中刪除！');
+                } else {
+                    bot.sendMessage(msg.chat.id, '已將此聊天室從訂閱清單中刪除！');
+                }
             } else {
-                bot.sendMessage(msg.chat.id, '尚未訂閱');
+                bot.sendMessage(msg.chat.id, '尚未訂閱！\n輸入 /subscribe 訂閱');
             }
             break;
         }
@@ -85,7 +98,7 @@ bot.on('new_chat_participant', (msg) => {
         console.log('join %s(%s)', msg.chat.title, msg.chat.id);
         if (config.channel.indexOf(msg.chat.id) < 0) {
             config.channel.push(msg.chat.id);
-            fs.writeFile('data.json', JSON.stringify(config));
+            fs.writeFile('data.json', JSON.stringify(config), () => {});
         }
     }
 });
@@ -95,14 +108,14 @@ bot.on('left_chat_participant', (msg) => {
         console.log('left %s(%s)', msg.chat.title, msg.chat.id);
         if (config.channel.indexOf(msg.chat.id) > -1) {
             config.channel.splice(config.channel.indexOf(msg.chat.id), 1);
-            fs.writeFile('data.json', JSON.stringify(config));
+            fs.writeFile('data.json', JSON.stringify(config), () => {});
         }
     }
 });
 
 const search = function(msg) {
     if (!msg.text.match(/\s(.+)/)) {
-        bot.sendMessage(msg.chat.id, '請輸入要搜尋的關鍵字！\n範例：/search 果 青\n群組內僅顯示五個結果\n更多資訊請看 https://share.dmhy.org/cms/page/name/faq.html#faq3');
+        bot.sendMessage(msg.chat.id, '請輸入要搜尋的關鍵字！\n範例：/search 果 青\n僅顯示五個結果\n更多資訊請看 https://share.dmhy.org/cms/page/name/faq.html#faq3');
         return;
     }
 
@@ -114,13 +127,10 @@ const search = function(msg) {
         }
         const processItem = function() {
             $('item').each(function(i, elem) {
-                if (msg.chat.type === 'private') {
-                    result.push(util.format('<code>%s</code> <a href="%s">%s</a>',
-                        $(this).children('category').text(),
-                        $(this).children('link').text(),
-                        $(this).children('title').text().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')));
-                } else if (i < 5) {
-                    result.push(util.format('<code>%s</code> <a href="%s">%s</a>',
+                if (i < 5) {
+                    const date = moment($(this).children('pubDate').text(), 'ddd, DD MMM YYYY HH:mm:ss ZZ');
+                    result.push(util.format('%s <code>%s</code>\n<a href="%s">%s</a>',
+                        date.locale('zh-tw').utcOffset(8).format('Y/M/D HH:mm'),
                         $(this).children('category').text(),
                         $(this).children('link').text(),
                         $(this).children('title').text().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')));
@@ -160,8 +170,8 @@ const getUpdate = function() {
         $('item').each(function(i, elem) {
             const date = moment($(this).children('pubDate').text(), 'ddd, DD MMM YYYY HH:mm:ss ZZ');
             if (pubDate.isBefore(date)) {
-                tmpData.push(util.format('%s <code>%s</code> <a href="%s">%s</a>',
-                    date.locale('zh-tw').utcOffset(8).format('H:mm'),
+                tmpData.push(util.format('%s <code>%s</code>\n<a href="%s">%s</a>',
+                    date.locale('zh-tw').utcOffset(8).format('HH:mm'),
                     $(this).children('category').text(),
                     $(this).children('link').text(),
                     $(this).children('title').text().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')));
@@ -193,9 +203,13 @@ const getUpdate = function() {
                     });
                 }).catch((e) => {
                     console.log('Send Update to %s failed! Error: %s', channel, e.message);
-                    if (config.channel.indexOf(channel) > -1) {
-                        config.channel.splice(config.channel.indexOf(channel), 1);
-                        fs.writeFile('data.json', JSON.stringify(config));
+                    if (failed.indexOf(channel) > -1) {
+                        if (config.channel.indexOf(channel) > -1) {
+                            config.channel.splice(config.channel.indexOf(channel), 1);
+                            fs.writeFile('data.json', JSON.stringify(config), () => {});
+                        }
+                    } else {
+                        failed.push(channel);
                     }
                 });
             });
