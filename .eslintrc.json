@@ -18,6 +18,7 @@
         "indent": "error",
         "arrow-body-style": "error",
         "arrow-spacing": "error",
-        "prefer-const": "error"
+        "prefer-const": "error",
+        "semi": "warn"
     }
 }
