@@ -20,14 +20,14 @@
   "homepage": "https://github.com/james58899/dmhy-telegram#readme",
   "dependencies": {
     "cheerio": "^0.22.0",
-    "moment": "^2.17.0",
-    "node-schedule": "^1.2.0",
+    "moment": "^2.18.1",
+    "node-schedule": "^1.2.1",
     "node-telegram-bot-api": "^0.27.0",
-    "request": "^2.79.0"
+    "request": "^2.81.0"
   },
   "devDependencies": {
-    "eslint": "^3.17.0",
+    "eslint": "^3.19.0",
     "eslint-config-google": "^0.7.1",
-    "husky": "^0.13.2"
+    "husky": "^0.13.3"
   }
 }
