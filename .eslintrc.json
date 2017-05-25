@@ -19,6 +19,7 @@
         "arrow-body-style": "error",
         "arrow-spacing": "error",
         "prefer-const": "error",
-        "semi": "warn"
+        "semi": "warn",
+        "keyword-spacing": "error"
     }
 }
