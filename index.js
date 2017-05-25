@@ -44,11 +44,11 @@ bot.getMe().then((me) => {
             search(msg);
             break;
         case 'subscribe':
-            if (channel.get(msg.chat.id)) {
+            if (channel.has(msg.chat.id)) {
                 if (msg.chat.type === 'private') {
-                    bot.sendMessage(msg.chat.id, '您已經在訂閱清單中了！');
+                    bot.sendMessage(msg.chat.id, '您已經在訂閱清單中了！\n若要更改關鍵字請先輸入 /unsubscribe 取消訂閱');
                 } else {
-                    bot.sendMessage(msg.chat.id, '這個聊天室已經在訂閱清單中了！');
+                    bot.sendMessage(msg.chat.id, '這個聊天室已經在訂閱清單中了！\n若要更改關鍵字請先輸入 /unsubscribe 取消訂閱');
                 }
                 return;
             }
