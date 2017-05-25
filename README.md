@@ -1,6 +1,8 @@
 # dmhy-telegram
 自動抓取動漫花園RSS並發到Telegram
 
+* 1.2.0 改變了儲存結構，已訂閱的頻道資料會消失
+
 ## 需求
 * Node.js 6+
 
