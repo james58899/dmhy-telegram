@@ -36,6 +36,9 @@ bot.getMe().then((me) => {
         if (msg.chat.type === 'private') {
             console.log('%s(%s) => %s: %s', msg.from.username, msg.from.id, me.username, msg.text);
         } else {
+            if (regex[2] !== me.username) {
+                return;
+            }
             console.log('%s(%s) => %s(%s): %s', msg.from.username, msg.from.id, msg.chat.title, msg.chat.id, msg.text);
         }
 
