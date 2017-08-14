@@ -21,12 +21,12 @@
   "dependencies": {
     "cheerio": "^1.0.0-rc.2",
     "moment": "^2.18.1",
-    "node-schedule": "^1.2.3",
+    "node-schedule": "^1.2.4",
     "node-telegram-bot-api": "^0.27.1",
     "request": "^2.81.0"
   },
   "devDependencies": {
-    "eslint": "^4.3.0",
+    "eslint": "^4.4.1",
     "eslint-config-google": "^0.9.1",
     "husky": "^0.14.3"
   }
