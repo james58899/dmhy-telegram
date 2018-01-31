@@ -3,6 +3,8 @@
 
 * 1.2.0 改變了儲存結構，已訂閱的頻道資料會消失
 
+[Telegram bot](https://t.me/dmhyBot)
+
 ## 需求
 * Node.js 6+
 
