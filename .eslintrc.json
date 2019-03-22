@@ -5,21 +5,21 @@
         "es6": true
     },
     "rules": {
-        "no-invalid-this": "warn",
-        "no-console": "off",
-        "max-len": "off",
-        "require-jsdoc": "off",
-        "one-var": "warn",
-        "one-var-declaration-per-line": "error",
-        "curly": "warn",
-        "eqeqeq": ["warn", "smart"],
-        "block-spacing": ["warn", "never"],
-        "comma-dangle": ["error", "never"],
-        "indent": "error",
         "arrow-body-style": "error",
         "arrow-spacing": "error",
+        "block-spacing": ["warn", "never"],
+        "comma-dangle": ["error", "never"],
+        "curly": "warn",
+        "eqeqeq": ["warn", "smart"],
+        "indent": "error",
+        "keyword-spacing": "error",
+        "max-len": "off",
+        "no-console": "off",
+        "no-invalid-this": "warn",
+        "one-var-declaration-per-line": "error",
+        "one-var": "warn",
         "prefer-const": "error",
-        "semi": "warn",
-        "keyword-spacing": "error"
+        "require-jsdoc": "off",
+        "semi": "warn"
     }
 }
