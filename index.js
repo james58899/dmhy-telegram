@@ -2,33 +2,39 @@
 const cheerio = require('cheerio');
 const fs = require('fs');
 const util = require('util');
-const moment = require('moment');
+const dayjs = require('dayjs');
+const customParseFormat = require('dayjs/plugin/customParseFormat');
+const utc = require('dayjs/plugin/utc');
 const schedule = require('node-schedule');
 const TelegramBot = require('node-telegram-bot-api');
 const request = require('request');
 const data = require('./data.json');
 
+dayjs.extend(customParseFormat);
+dayjs.extend(utc);
+
 const messageIDs = new Map();
-const channel = new Map(data.channel);
+const channels = new Map(data.channel);
 const failed = [];
+let username;
 let results = [];
-let pubDate = moment();
+let pubDate = dayjs().subtract(2, 'h');
 
 const bot = new TelegramBot(data.key, {
   polling: {
     interval: 0,
-    params: {
-      timeout: 60
-    }
+    params: {timeout: 60}
   }
 });
 
 const saveData = function() {
-  data.channel = [...channel];
+  data.channel = [...channels];
   fs.writeFile('data.json', JSON.stringify(data), () => {});
 };
 
 bot.getMe().then((me) => {
+  username = me.username;
+
   bot.onText(/^\/(\w+)@?(\w*)/i, (msg, regex) => {
     if (regex[2] && regex[2] !== me.username) {
       return;
@@ -43,11 +49,16 @@ bot.getMe().then((me) => {
     }
 
     switch (regex[1]) {
+      case 'start':
+        if (msg.text.match(/\w{32}$/)) {
+          bot.sendMessage(msg.chat.id, `<pre>magnet:?xt=urn:btih:${msg.text.replace(/\/start@?\w*\s/i, '')}</pre>`, {parse_mode: 'HTML'});
+        }
+        break;
       case 'search':
         search(msg);
         break;
       case 'subscribe':
-        if (channel.has(msg.chat.id)) {
+        if (channels.has(msg.chat.id)) {
           if (msg.chat.type === 'private') {
             bot.sendMessage(msg.chat.id, '您已經在訂閱清單中了！\n若要更改關鍵字請先輸入 /unsubscribe 取消訂閱');
           } else {
@@ -56,10 +67,10 @@ bot.getMe().then((me) => {
           return;
         }
         if (msg.text.match(/\s(.+)/)) {
-          channel.set(msg.chat.id, msg.text.match(/\s(.+)/)[1]);
+          channels.set(msg.chat.id, msg.text.match(/\s(.+)/)[1]);
           saveData();
         } else {
-          channel.set(msg.chat.id);
+          channels.set(msg.chat.id);
           saveData();
         }
         if (msg.chat.type === 'private') {
@@ -69,7 +80,7 @@ bot.getMe().then((me) => {
         }
         break;
       case 'unsubscribe':
-        if (channel.delete(msg.chat.id)) {
+        if (channels.delete(msg.chat.id)) {
           saveData();
           console.log(msg.chat.id + ' remove from subscription list.');
           if (msg.chat.type === 'private') {
@@ -101,20 +112,26 @@ bot.getMe().then((me) => {
     });
   });
 
-  bot.on('new_chat_participant', (msg) => {
+  bot.on('new_chat_members', (msg) => {
     if (msg.new_chat_member.username === me.username) {
       console.log('join %s(%s)', msg.chat.title, msg.chat.id);
-      channel.set(msg.chat.id);
+      channels.set(msg.chat.id);
       saveData();
     }
   });
 
-  bot.on('left_chat_participant', (msg) => {
+  bot.on('left_chat_member', (msg) => {
     if (msg.left_chat_member.username === me.username) {
       console.log('left %s(%s)', msg.chat.title, msg.chat.id);
-      channel.delete(msg.chat.id);
+      channels.delete(msg.chat.id);
       saveData();
     }
+  });
+
+  bot.on('migrate_to_chat_id', (msg) => {
+    console.log('migrate chat from %s to %s', msg.chat.id, msg.migrate_to_chat_id);
+    channels.delete(msg.chat.id);
+    channels.set(msg.migrate_to_chat_id);
   });
 });
 
@@ -133,12 +150,14 @@ const search = function(msg) {
     const processItem = function() {
       $('item').each((i, elem) => {
         if (i < 5) {
-          const date = moment($(elem).children('pubDate').text(), 'ddd, DD MMM YYYY HH:mm:ss ZZ');
-          result.push(util.format('%s <code>%s</code>\n<a href="%s">%s</a>',
-              date.locale('zh-tw').utcOffset(8).format('Y/M/D HH:mm'),
+          const date = dayjs($(elem).children('pubDate').text());
+          result.push(util.format('%s <code>%s</code>\n<a href="%s">%s</a> <a href="%s">*</a>',
+              date.locale('zh-tw').local().format('YYYY/M/D HH:mm'),
               $(elem).children('category').text(),
               $(elem).children('link').text(),
-              $(elem).children('title').text().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')));
+              $(elem).children('title').text().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'),
+              `tg://resolve?domain=${username}&start=${$(elem).children('enclosure').attr('url').substr(20, 32)}`
+          ));
         }
       });
       bot.sendMessage(msg.chat.id, result.join('\n\n'), {
@@ -166,6 +185,7 @@ const getUpdate = function() {
       console.log('update fetch failed!');
       return;
     }
+
     let tmpTime;
     const tmpData = [];
     const $ = cheerio.load(body, {
@@ -173,16 +193,17 @@ const getUpdate = function() {
     });
 
     $('item').each((i, elem) => {
-      const date = moment($(elem).children('pubDate').text(), 'ddd, DD MMM YYYY HH:mm:ss ZZ');
+      const date = dayjs($(elem).children('pubDate').text());
       if (pubDate.isBefore(date)) {
-        tmpData.push(util.format('%s <code>%s</code>\n<a href="%s">%s</a>',
-            date.locale('zh-tw').utcOffset(8).format('HH:mm'),
+        tmpData.push(util.format('%s <code>%s</code>\n<a href="%s">%s</a> <a href="%s">*</a>',
+            date.locale('zh-tw').local().format('HH:mm'),
             $(elem).children('category').text(),
             $(elem).children('link').text(),
-            $(elem).children('title').text().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')));
-        if (!tmpTime) {
-          tmpTime = date;
-        }
+            $(elem).children('title').text().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'),
+            `tg://resolve?domain=${username}&start=${$(elem).children('enclosure').attr('url').substr(20, 32)}`
+        ));
+
+        if (!tmpTime) tmpTime = date;
       }
     });
     if (tmpData.length !== 0) {
@@ -195,7 +216,7 @@ const getUpdate = function() {
       return;
     }
     let messages;
-    channel.forEach((filter, channel) => {
+    channels.forEach((filter, channel) => {
       if (filter) {
         messages = results.slice().filter((message) => message.match(new RegExp(filter, 'i'))).reverse();
         if (messages.length === 0) {
@@ -204,6 +225,7 @@ const getUpdate = function() {
       } else {
         messages = results.slice().reverse();
       }
+
       if (messageIDs.get(channel)) {
         bot.editMessageText(messages.join('\n\n'), {
           chat_id: channel,
@@ -222,7 +244,7 @@ const getUpdate = function() {
         }).catch((e) => {
           console.log('Send Update to %s failed! Error: %s', channel, e.message);
           if (failed.indexOf(channel) > -1) {
-            channel.delete(channel);
+            channels.delete(channel);
             saveData();
           } else {
             failed.push(channel);
