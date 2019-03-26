@@ -18,7 +18,7 @@ const channels = new Map(data.channel);
 const failed = [];
 let username;
 let results = [];
-let pubDate = dayjs().subtract(2, 'h');
+let pubDate = dayjs();
 
 const bot = new TelegramBot(data.key, {
   polling: {
