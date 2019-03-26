@@ -246,7 +246,7 @@ const getUpdate = function() {
           if (failed.indexOf(channel) > -1) {
             channels.delete(channel);
             saveData();
-          } else {
+          } else if (e.code === 'ETELEGRAM' && e.response.body.error_code >= 400 && e.response.body.error_code < 500 ) {
             failed.push(channel);
           }
         });
