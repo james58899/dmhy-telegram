@@ -218,7 +218,7 @@ const getUpdate = function() {
     let messages;
     channels.forEach((filter, channel) => {
       if (filter) {
-        messages = results.slice().filter((message) => message.match(new RegExp(filter, 'i'))).reverse();
+        messages = results.slice().filter((message) => message.substr(0, message.length - (59 + username.length)).match(new RegExp(filter, 'i'))).reverse();
         if (messages.length === 0) {
           return;
         }
