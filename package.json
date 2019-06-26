@@ -27,7 +27,7 @@
   "devDependencies": {
     "eslint": "^6.0.1",
     "eslint-config-google": "^0.13.0",
-    "husky": "^2.4.1"
+    "husky": "^2.5.0"
   },
   "husky": {
     "hooks": {
