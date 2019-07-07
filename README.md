@@ -17,4 +17,4 @@
 1. `curl https://raw.githubusercontent.com/james58899/dmhy-telegram/master/data.json > ~/dmhy-telegram.json`
 2. `docker pull james58899/dmhy-telegram`
 3. 編輯 `~/dmhy-telegram.json` 設定API token
-4. `docker run -v ~/dmhy-telegram.json:/usr/src/app/data.json james58899/dmhy-telegram`
+4. `docker run -v ~/dmhy-telegram.json:/app/data.json james58899/dmhy-telegram`
