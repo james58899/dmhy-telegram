@@ -19,7 +19,7 @@
   "homepage": "https://github.com/james58899/dmhy-telegram#readme",
   "dependencies": {
     "cheerio": "^1.0.0-rc.3",
-    "dayjs": "^1.11.5",
+    "dayjs": "^1.11.7",
     "node-schedule": "^2.1.0",
     "node-telegram-bot-api": "^0.50.0",
     "request": "^2.88.2"
