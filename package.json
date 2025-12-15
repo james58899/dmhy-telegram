@@ -22,7 +22,7 @@
     "cheerio": "^1.1.2",
     "dayjs": "^1.11.13",
     "node-schedule": "^2.1.1",
-    "node-telegram-bot-api": "^0.66.0",
+    "node-telegram-bot-api": "^0.67.0",
     "request": "^2.88.2"
   },
   "devDependencies": {
